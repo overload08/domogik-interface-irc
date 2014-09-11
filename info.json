@@ -1,0 +1,15 @@
+{ 
+    "configuration": [],
+    "identity": {
+        "author": "Fritz", 
+        "author_email": "fritz.smh at gmail.com", 
+        "tags": ["irc"], 
+        "dependencies": [], 
+        "description": "Irc interface", 
+        "domogik_min_version": "0.4.0", 
+        "name": "irc", 
+        "type": "interface", 
+        "version": "1.0a0"
+    }, 
+    "json_version": 2
+}

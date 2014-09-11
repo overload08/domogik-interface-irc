@@ -1,0 +1,11 @@
+* define json format
+* handle configuration in json
+* Domogik side : create an Interface class as the Plugin one and use it
+* implement an included irc server. See https://bitbucket.org/jaraco/irc/src/d178c89b791df16afb7e93b51c5477f22d7a652d/irc/bot.py?at=default#cl-21
+* replace all print by self.log.*
+
+* doc
+  * context : location public/private
+              media irc
+              no sex/mood
+              identity
