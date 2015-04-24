@@ -1,15 +1,20 @@
-{ 
-    "configuration": [],
+{
+    "json_version" : 2,
     "identity": {
-        "author": "Fritz", 
-        "author_email": "fritz.smh at gmail.com", 
-        "tags": ["irc"], 
-        "dependencies": [], 
-        "description": "Irc interface", 
-        "domogik_min_version": "0.4.0", 
-        "name": "irc", 
-        "type": "interface", 
-        "version": "1.0a0"
-    }, 
-    "json_version": 2
+        "author": "Fritz",
+        "author_email": "fritz.smh at gmail.com",
+        "tags": ["interface", "irc"],
+        "dependencies": [],
+        "description": "Irc interface for your butler",
+        "domogik_min_version": "0.4.0",
+        "name": "irc",
+        "type": "interface",
+        "version": "1.0"
+    },
+    "configuration": [],
+    "device_types": {},
+    "sensors": {},
+    "xpl_stats": {},
+    "commands": {},
+    "xpl_commands": {}
 }

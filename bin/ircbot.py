@@ -41,25 +41,24 @@ import irc.strings
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 import threading
 
-#from domogik.common.plugin import Plugin
+from domogik.interface.common.interface import Interface
 
-import zmq
-from domogikmq.pubsub.subscriber import MQAsyncSub
-from domogikmq.pubsub.publisher import MQPub
-from zmq.eventloop.ioloop import IOLoop
+#import zmq
+#from domogikmq.pubsub.subscriber import MQAsyncSub
+#from domogikmq.pubsub.publisher import MQPub
+#from zmq.eventloop.ioloop import IOLoop
 
 
+MEDIA_IRC = "irc"
 PUBMSG = "irc public message"
 PRIVMSG = "irc private message"
 
-class IrcInterface():
+class IrcManager(Interface):
     """ An irc interface for Domogik
     """
 
     def __init__(self):
-        # TODO : use Interface when developped
-        #Plugin.__init__(self, name = 'irc')
-        self._name = "irc"
+        Interface.__init__(self, name='irc')
 
         ### Configuration
         # TODO : get from the configuration tools
@@ -90,101 +89,86 @@ class IrcInterface():
 
 
 
-        ### MQ
-        print("Prepraring the MQ...")
+        self.log.info(u"Starting the bot....")
+        self.the_bot = Bot(self.irc_channel, self.irc_user1_nick, self.irc_server, self.irc_port, self.context, self.log, self.get_sanitized_hostname, self.send_to_butler)
 
-        ## subscribe the MQ for interfaces inputs
-        #self.sub = MQAsyncSub.__init__(self, self.zmq, self._name, ['interface.input'])
-
-        ## MQ publisher 
-        #self._mq_name = "interface-{0}.{1}".format(self._name, self.get_sanitized_hostname())
-        #self.zmq = zmq.Context()
-        #self.pub = MQPub(self.zmq, self._mq_name)
-
-
-        print("Starting the bot....")
-        #the_bot = Bot(self.irc_channel, self.irc_user1_nick, self.irc_server, self.irc_port, self.context, self.pub)
-        the_bot = Bot(self.irc_channel, self.irc_user1_nick, self.irc_server, self.irc_port, self.context)
         # TODO : launch in a thread ?
-        the_bot.start()
+        #the_bot.start()
 
-        #thr_bot = threading.Thread(None,
-        #                           the_bot.start,
-        #                           'bot',
-        #                           (),
-        #                           {})
+        thr_bot = threading.Thread(None,
+                                   self.the_bot.start,
+                                   'bot',
+                                   (),
+                                   {})
         thr_bot.start()
         # TODO : register the thread
 
         # TODO : interface ready()
+        self.ready()
 
 
         # Review : set the MQ here instead of inside the bot ????
 
 
+    def process_response(self, response):
+        """ Process the butler response
+        """
+        try:
+            #self.chat_app.add_response(u"{0}".format(response['text']))
+            self.log.debug(u"Butler > {0}".format(response['text']))
+            self.the_bot.process_message(response)
+        except:
+            self.log.error(u"Error when processing response : {0}".format(traceback.format_exc()))
 
 
-class Bot(irc.bot.SingleServerIRCBot, MQAsyncSub):
+class Bot(irc.bot.SingleServerIRCBot):
     """ The irc bot itself
         Based originally on testbot.py from https://bitbucket.org/jaraco/irc
     """
 
-    def __init__(self, channel, nickname, server, port, context): ###, mq_pub):
+    def __init__(self, channel, nickname, server, port, context, cb_log, cb_get_sanitized_hostname, cb_send_to_butler):
         """
            @param channel : irc
            @param nickname : irc
            @param server : irc
            @param port : irc
            @param context : Domogik context for an interface
-           @param mq_pub : MQPub object for publication over message queue
+           @param cb_log : domogik logger
+           @param cb_get_sanitized_hostname : get_sanitized_hostname callback
+           @param cb_send_to_butler : send to butler callback
         """
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
         self.channel = channel
         self.context = context
-        #self.mq_pub = mq_pub
+        self.log = cb_log
+        self.get_sanitized_hostname = cb_get_sanitized_hostname
+        self.send_to_butler = cb_send_to_butler
 
-        # MQ publisher 
-        print("Prepare MQ publisher")
-        self._mq_name = "interface-irc.{0}".format(self.get_sanitized_hostname())
-        self.zmq = zmq.Context()
-        self.mq_pub = MQPub(self.zmq, self._mq_name)
+        #DEL## MQ publisher 
+        #DEL#self.log.info(u"Prepare MQ publisher")
+        #DEL#self._mq_name = "interface-irc.{0}".format(self.get_sanitized_hostname())
+        #DEL#self.zmq = zmq.Context()
+        #DEL#self.mq_pub = MQPub(self.zmq, self._mq_name)
 
-        # subscribe the MQ for interfaces inputs
-        print("Subscribe to the MQ")
-        MQAsyncSub.__init__(self, self.zmq, "irc", ['interface.output'])
-        thr_ioloop = threading.Thread(None,
-                                   IOLoop.instance().start,
-                                   'bot',
-                                   (),
-                                   {})
-        print("Start IOLoop in a thread...")
-        thr_ioloop.start()
+        #DEL## subscribe the MQ for interfaces inputs
+        #DEL#self.log.info(u"Subscribe to the MQ")
+        #DEL#MQAsyncSub.__init__(self, self.zmq, "irc", ['interface.output'])
 
-    #def start(self):
-    #    print("Starting Bot...")
-    #    irc.bot.SingleServerIRCBot.start(self)
-    #    print("Starting IOLoop...")
-    #    IOLoop.instance().start()
-
-    def get_sanitized_hostname(self):
-        """ TODO : remove when Interface will be used
-        """
-        return "foobar"
 
     def on_nicknameinuse(self, c, e):
-        print("Nickname {0} already used, try to change it".format(c.get_nickname()))
+        self.log.error(u"Nickname {0} already used, try to change it".format(c.get_nickname()))
         c.nick(c.get_nickname() + "_")
 
     def on_welcome(self, c, e):
-        print("Welcomed on the irc server. Preparing to join channels....")
+        self.log.info(u"Welcomed on the irc server. Preparing to join channels....")
         c.join(self.channel)
 
     def on_privmsg(self, c, e):
-        print("PRIVMSG ({0}) > {1}".format(e.source.nick, e.arguments[0]))
+        self.log.info(u"PRIVMSG ({0}) > {1}".format(e.source.nick, e.arguments[0]))
         self.do_command(e, e.arguments[0], PRIVMSG)
 
     def on_pubmsg(self, c, e):
-        print("PUBMSG  ({0}) > {1}".format(e.source.nick, e.arguments[0]))
+        self.log.debug(u"PUBMSG  ({0}) > {1}".format(e.source.nick, e.arguments[0]))
         # On public channel, process only when explicitily called : "nestor : foo"
         a = e.arguments[0].split(":", 1)
         if len(a) > 1 and irc.strings.lower(a[0]) == irc.strings.lower(self.connection.get_nickname()):
@@ -192,11 +176,11 @@ class Bot(irc.bot.SingleServerIRCBot, MQAsyncSub):
         return
 
     def on_dccmsg(self, c, e):
-        print("DCCMSG  ({0}) > {1}".format(e.source.nick, e))
+        self.log.debug(u"DCCMSG  ({0}) > {1}".format(e.source.nick, e))
         pass
 
     def on_dccchat(self, c, e):
-        print("DCCCHAT ({0}) > {1}".format(e.source.nick, e))
+        self.log.debug(u"DCCCHAT ({0}) > {1}".format(e.source.nick, e))
         pass
 
     def do_command(self, e, cmd, location):
@@ -214,13 +198,16 @@ class Bot(irc.bot.SingleServerIRCBot, MQAsyncSub):
             self.die()
         else:
             try:
-                # send the request over MQ to the butler (or anything else :))
-                request = self.context
-                request["text" ] = cmd
-                request["identity"] = nick
-                request["location"] = location
-                self.mq_pub.send_event('interface.input',
-                                     request)
+                # TODO : add context
+                self.send_to_butler(cmd, media = MEDIA_IRC, location = location)
+                ## send the request over MQ to the butler (or anything else :))
+                #request = self.context
+                #request["text" ] = cmd
+                #request["identity"] = nick
+                #request["location"] = location
+                #self.log.debug("Send message over MQ : {0}".format(request))
+                #self.mq_pub.send_event('interface.input',
+                #                     request)
 
                 # if ok, notify
                 c.notice(nick, "Request sent over MQ with success")
@@ -231,26 +218,27 @@ class Bot(irc.bot.SingleServerIRCBot, MQAsyncSub):
                 for line in traceback.format_exc().split("\n"):
                     c.notice(nick, line)
 
-    def on_message(self, msgid, content):
+    #def OFF_on_message(self, msgid, content):
+    def process_message(self, content):
         """ When a message is received from the MQ (pub/sub)
         """
-        print("Received message : {0}".format(content))
         c = self.connection
-        if msgid == "interface.output":
-            print("Received message : {0}".format(content))
+        #if msgid == "interface.output":
+        if 1 == 1:
+            self.log.debug(u"Received message : {0}".format(content))
             ### filter on location, media
-            # if media not irc, don't process
-            if content['media'] != "irc": 
-                return
+            #DEL ??# # if media not irc, don't process
+            #DEL ??# if content['media'] != "irc": 
+            #DEL ??#     return
             # location
             if content['location'] == PUBMSG:
-                c.privmsg(self.channel, "{0}".format(content['text']))
+                c.privmsg(self.channel, u"{0}".format(content['text']))
             elif content['location'] == PRIVMSG:
-                c.privmsg(content['reply_to'], "{0}".format(content['text']))
+                c.privmsg(content['reply_to'], u"{0}".format(content['text']))
             else:
-                print("WARNING Invalid location received for irc media : {0}".format(content['location']))
+                self.log.warning(u"Invalid location received for irc media : {0}".format(content['location']))
 
 
 
 if __name__ == "__main__":
-    irc_interface = IrcInterface()
+    irc_interface = IrcManager()
