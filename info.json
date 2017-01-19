@@ -1,8 +1,8 @@
 {
     "json_version" : 2,
     "identity": {
-        "author": "Fritz",
-        "author_email": "fritz.smh at gmail.com",
+        "author": "Fritz & OverLoad",
+        "author_email": "fritz.smh at gmail.com, y.poilvert at geekinfo.fr",
         "tags": ["interface", "irc"],
         "dependencies": [],
         "description": "Irc interface for your butler",
@@ -11,7 +11,31 @@
         "type": "interface",
         "version": "1.0"
     },
-    "configuration": [],
+    "configuration": [{
+	    "default": "aria-butler",
+	    "description": "Name of bot",
+	    "key": "name",
+	    "name": "Name",
+	    "required": true,
+	    "type": "string"
+    },
+    {
+            "default": "",
+            "description": "URL Of IRC server",
+            "key": "url",
+            "name": "URL",
+            "required": true,
+            "type": "string"
+    },
+    {
+            "default": "",
+            "description": "Room to join",
+            "key": "room",
+            "name": "Room",
+            "required": true,
+            "type": "string"
+    }
+	],
     "device_types": {},
     "sensors": {},
     "xpl_stats": {},
