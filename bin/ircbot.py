@@ -62,12 +62,12 @@ class IrcManager(Interface):
 
         ### Configuration
         # TODO : get from the configuration tools
-        self.irc_server = "irc.freenode.net"
+        self.irc_server = self.get_config("url")
         self.irc_port = 6667
-        self.irc_channel = "#domogik"
-        self.irc_user1_nick = "aria-butler"
+        self.irc_channel = self.get_config("room")
+        self.irc_user1_nick = self.get_config("name")
         self.irc_user1_password = None
-        self.irc_user2_nick = "aria-butler2"  # in case user1 is already used
+        self.irc_user2_nick = self.irc_user1_nick + "2"  # in case user1 is already used
         self.irc_user2_password = None
         self.irc_reconnect_interval = 60
 
